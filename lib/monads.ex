@@ -1,0 +1,2 @@
+defmodule Monads do
+end
