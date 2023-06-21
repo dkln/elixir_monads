@@ -34,8 +34,9 @@ defmodule Monads.ResultTest do
              |> Monads.Result.map(fn r ->
                assert r == {1, 2, 3}
                r
-             end) ==
-               {:ok, {1, 2, 3}}
+             end)
+             |> Monads.Result.map(:saved) ==
+               {:ok, :saved}
     end
 
     test "something goes wrong" do
@@ -48,7 +49,8 @@ defmodule Monads.ResultTest do
              |> Monads.Result.map(fn r ->
                assert r == 1
                {:error, :not_found}
-             end) == {:error, :not_found}
+             end)
+             |> Monads.Result.map(fn _r -> :should_not_happen end) == {:error, :not_found}
     end
   end
 end

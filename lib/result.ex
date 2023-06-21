@@ -27,6 +27,10 @@ defmodule Monads.Result do
     |> ok()
   end
 
+  def map(value, new_value) when is_ok(value), do: ok(new_value)
+
+  def map(value, _func) when is_error(value), do: error(value)
+
   @spec tuple_value(tuple | term) :: term
   def tuple_value(value) when is_tuple(value),
     do: if(tuple_size(value) == 2, do: elem(value, 1), else: Tuple.delete_at(value, 0))
