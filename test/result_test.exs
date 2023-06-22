@@ -134,6 +134,22 @@ defmodule Monads.ResultTest do
              end) == {:ok, 2}
     end
 
+    test "it recovers an error with an anonymous function with arity 0" do
+      assert "user"
+             |> Monads.Result.ok()
+             |> Monads.Result.map(:get_user, fn r ->
+               assert r == "user"
+               {:ok, 1}
+             end)
+             |> Monads.Result.map(:get_profile, fn r ->
+               assert r == 1
+               {:error, :not_found}
+             end)
+             |> Monads.Result.recover(fn ->
+               {:ok, 2}
+             end) == {:ok, 2}
+    end
+
     test "it recovers an error with an anonymous function than returns another error" do
       assert "user"
              |> Monads.Result.ok()
@@ -170,6 +186,25 @@ defmodule Monads.ResultTest do
                {:ok, "some_user"}
              end)
              |> Monads.Result.recover(:get_profile, fn _r ->
+               {:ok, :should_not_happen}
+             end) == {:ok, "some_user"}
+    end
+
+    test "it recovers an error that matches a context with arity of 0" do
+      assert "user"
+             |> Monads.Result.ok()
+             |> Monads.Result.map(:get_user, fn r ->
+               assert r == "user"
+               {:error, :not_found}
+             end)
+             |> Monads.Result.map(:get_profile, fn r ->
+               assert r == 1
+               {:error, :internal_server_error}
+             end)
+             |> Monads.Result.recover(:get_user, fn ->
+               {:ok, "some_user"}
+             end)
+             |> Monads.Result.recover(:get_profile, fn ->
                {:ok, :should_not_happen}
              end) == {:ok, "some_user"}
     end
