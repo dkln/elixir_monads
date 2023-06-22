@@ -100,4 +100,95 @@ defmodule Monads.ResultTest do
              |> Monads.Result.map(:notify_user, fn _r -> :should_not_happen end) == {:error, :not_found, :get_profile}
     end
   end
+
+  describe "recover/2" do
+    test "it recovers an error with a value" do
+      assert "user"
+             |> Monads.Result.ok()
+             |> Monads.Result.map(:get_user, fn r ->
+               assert r == "user"
+               {:ok, 1}
+             end)
+             |> Monads.Result.map(:get_profile, fn r ->
+               assert r == 1
+               {:error, :not_found}
+             end)
+             |> Monads.Result.recover({:ok, 2}) ==
+               {:ok, 2}
+    end
+
+    test "it recovers an error with an anonymous function" do
+      assert "user"
+             |> Monads.Result.ok()
+             |> Monads.Result.map(:get_user, fn r ->
+               assert r == "user"
+               {:ok, 1}
+             end)
+             |> Monads.Result.map(:get_profile, fn r ->
+               assert r == 1
+               {:error, :not_found}
+             end)
+             |> Monads.Result.recover(fn r ->
+               assert r == {:not_found, :get_profile}
+               {:ok, 2}
+             end) == {:ok, 2}
+    end
+
+    test "it recovers an error with an anonymous function than returns another error" do
+      assert "user"
+             |> Monads.Result.ok()
+             |> Monads.Result.map(:get_user, fn r ->
+               assert r == "user"
+               {:ok, 1}
+             end)
+             |> Monads.Result.map(:get_profile, fn r ->
+               assert r == 1
+               {:error, :not_found}
+             end)
+             |> Monads.Result.recover(fn r ->
+               assert r == {:not_found, :get_profile}
+               {:error, :internal_server_error}
+             end) ==
+               {:error, :internal_server_error}
+    end
+  end
+
+  describe "recover/3" do
+    test "it recovers an error that matches a context" do
+      assert "user"
+             |> Monads.Result.ok()
+             |> Monads.Result.map(:get_user, fn r ->
+               assert r == "user"
+               {:error, :not_found}
+             end)
+             |> Monads.Result.map(:get_profile, fn r ->
+               assert r == 1
+               {:error, :internal_server_error}
+             end)
+             |> Monads.Result.recover(:get_user, fn r ->
+               assert r == :not_found
+               {:ok, "some_user"}
+             end)
+             |> Monads.Result.recover(:get_profile, fn _r ->
+               {:ok, :should_not_happen}
+             end) == {:ok, "some_user"}
+    end
+
+    test "it recovers an error that matches a error and context" do
+      assert "user"
+             |> Monads.Result.ok()
+             |> Monads.Result.map(:get_user, fn r ->
+               assert r == "user"
+               {:error, :not_found}
+             end)
+             |> Monads.Result.map(:get_profile, fn r ->
+               assert r == 1
+               {:error, :internal_server_error}
+             end)
+             |> Monads.Result.recover({:not_found, :get_user}, fn r ->
+               assert r == :not_found
+               {:ok, "some_user"}
+             end) == {:ok, "some_user"}
+    end
+  end
 end

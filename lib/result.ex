@@ -7,7 +7,8 @@ defmodule Monads.Result do
 
   @spec ok(term) :: t
   def ok(value) when is_function(value), do: ok(value.())
-  def ok(value) when is_result(value), do: value
+  def ok(value) when is_ok(value), do: value
+  def ok(value) when is_error(value), do: error(value)
   def ok(value), do: {:ok, value}
 
   @spec ok(term, atom) :: t
@@ -18,13 +19,14 @@ defmodule Monads.Result do
 
   @spec error(term) :: t
   def error(value) when is_function(value), do: error(value.())
-  def error(value) when is_result(value), do: value
+  def error(value) when is_error(value), do: value
+  def error(value) when is_ok(value), do: ok(value)
   def error(value), do: {:error, value}
 
   @spec error(term, atom) :: t
   def error(value, context) when is_function(value) and is_atom(context), do: error(value.(), context)
 
-  def error(value, context) when is_result(value) and is_atom(context) do
+  def error(value, context) when is_error(value) and is_atom(context) do
     if tuple_size(value) == 2 do
       {:error, tuple_value(value), context}
     else
@@ -55,6 +57,32 @@ defmodule Monads.Result do
     |> func.()
     |> ok(context)
   end
+
+  @spec recover(t, function | term) :: t
+  def recover(value, func) when is_error(value) and is_function(func) do
+    value
+    |> tuple_value()
+    |> func.()
+    |> ok()
+  end
+
+  def recover(value, _func) when is_ok(value), do: value
+  def recover(value, func) when is_error(value), do: ok(func)
+
+  @spec recover(t, atom, function | term) :: t
+  def recover(value, context, func)
+      when is_error(value) and (is_atom(context) or is_tuple(context)) and is_function(func) do
+    if tuple_size(value) == 3 && (elem(value, 2) == context || Tuple.delete_at(value, 0) == context) do
+      value
+      |> elem(1)
+      |> func.()
+      |> ok()
+    else
+      value
+    end
+  end
+
+  def recover(value, _context, _func), do: value
 
   @spec tuple_value(tuple | term) :: term
   def tuple_value(value) when is_tuple(value),
