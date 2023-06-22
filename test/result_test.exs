@@ -6,6 +6,15 @@ defmodule Monads.ResultTest do
     assert Monads.Result.ok({:ok, 1337}) == {:ok, 1337}
     assert Monads.Result.ok(fn -> 1337 end) == {:ok, 1337}
     assert Monads.Result.ok(fn -> {:ok, 1337} end) == {:ok, 1337}
+    assert Monads.Result.ok({:error, :faulty}) == {:error, :faulty}
+  end
+
+  test "ok/2" do
+    assert Monads.Result.ok(1337, :get_user) == {:ok, 1337}
+    assert Monads.Result.ok({:ok, 1337}, :get_user) == {:ok, 1337}
+    assert Monads.Result.ok(fn -> 1337 end, :get_user) == {:ok, 1337}
+    assert Monads.Result.ok(fn -> {:ok, 1337} end, :get_user) == {:ok, 1337}
+    assert Monads.Result.ok({:error, :faulty}, :get_user) == {:error, :faulty, :get_user}
   end
 
   test "error/1" do
@@ -13,6 +22,7 @@ defmodule Monads.ResultTest do
     assert Monads.Result.error({:error, :not_found}) == {:error, :not_found}
     assert Monads.Result.error(fn -> :not_found end) == {:error, :not_found}
     assert Monads.Result.error(fn -> {:error, :not_found} end) == {:error, :not_found}
+    assert Monads.Result.error({:ok, 1337}) == {:ok, 1337}
   end
 
   test "error/2" do
@@ -21,6 +31,7 @@ defmodule Monads.ResultTest do
     assert Monads.Result.error(fn -> :not_found end, :get_user) == {:error, :not_found, :get_user}
     assert Monads.Result.error(fn -> {:error, :not_found} end, :get_user) == {:error, :not_found, :get_user}
     assert {:error, :not_found, :get_user} |> Monads.Result.error(:save_user) == {:error, :not_found, :get_user}
+    assert Monads.Result.error({:ok, 1337}, :get_user) == {:ok, 1337}
   end
 
   describe "map/2" do

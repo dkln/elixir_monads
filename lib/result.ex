@@ -15,7 +15,7 @@ defmodule Monads.Result do
   def ok(value, context) when is_function(value) and is_atom(context), do: ok(value.(), context)
   def ok(value, context) when is_ok(value) and is_atom(context), do: value
   def ok(value, context) when is_error(value) and is_atom(context), do: error(value, context)
-  def ok(value, context) when is_atom(context), do: value
+  def ok(value, context) when is_atom(context), do: {:ok, value}
 
   @spec error(term) :: t
   def error(value) when is_function(value), do: error(value.())
@@ -33,6 +33,8 @@ defmodule Monads.Result do
       value
     end
   end
+
+  def error(value, context) when is_ok(value) and is_atom(context), do: ok(value, context)
 
   def error(value, context), do: {:error, value, context}
 
