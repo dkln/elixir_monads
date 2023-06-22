@@ -28,7 +28,7 @@ defmodule Monads.Result do
 
   def error(value, context) when is_error(value) and is_atom(context) do
     if tuple_size(value) == 2 do
-      {:error, tuple_value(value), context}
+      {:error, result_value(value), context}
     else
       value
     end
@@ -41,7 +41,7 @@ defmodule Monads.Result do
   @spec map(t, function | term) :: t
   def map(value, func) when is_ok(value) and is_function(func) do
     value
-    |> tuple_value()
+    |> result_value()
     |> call(func)
     |> ok()
   end
@@ -55,7 +55,7 @@ defmodule Monads.Result do
 
   def map(value, context, func) when is_atom(context) and is_function(func) do
     value
-    |> tuple_value()
+    |> result_value()
     |> call(func)
     |> ok(context)
   end
@@ -63,7 +63,7 @@ defmodule Monads.Result do
   @spec recover(t, function | term) :: t
   def recover(value, func) when is_error(value) and is_function(func) do
     value
-    |> tuple_value()
+    |> result_value()
     |> call(func)
     |> ok()
   end
@@ -97,9 +97,9 @@ defmodule Monads.Result do
     end
   end
 
-  @spec tuple_value(tuple | term) :: term
-  def tuple_value(value) when is_tuple(value),
+  @spec result_value(tuple | term) :: term
+  def result_value(value) when is_tuple(value),
     do: if(tuple_size(value) == 2, do: elem(value, 1), else: Tuple.delete_at(value, 0))
 
-  def tuple_value(value), do: value
+  def result_value(value), do: value
 end
