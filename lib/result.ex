@@ -1,9 +1,17 @@
 defmodule Monads.Result do
-  defguard is_ok(value) when is_tuple(value) and elem(value, 0) == :ok
-  defguard is_error(value) when is_tuple(value) and elem(value, 0) == :error
+  defguard is_ok(value) when value == :ok or (is_tuple(value) and elem(value, 0)) == :ok
+  defguard is_error(value) when value == :error or (is_tuple(value) and elem(value, 0)) == :error
   defguard is_result(value) when is_ok(value) or is_error(value)
 
   @type t :: {:ok, term} | {:error, term} | {:error, atom, term}
+
+  @spec ok?(t()) :: boolean()
+  def ok?(value) when is_ok(value), do: true
+  def ok?(value) when is_error(value), do: false
+
+  @spec error?(t()) :: boolean()
+  def error?(value) when is_error(value), do: true
+  def error?(value) when is_ok(value), do: false
 
   @spec ok(term) :: t
   def ok(value) when is_function(value), do: ok(value.())
