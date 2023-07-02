@@ -13,22 +13,8 @@ defmodule Monads.Multi do
     result =
       commands
       |> Enum.map(fn {command, index} ->
-        unique_id =
-          command.id == nil ||
-            Enum.find(commands, fn {other_command, other_index} ->
-              index != other_index && other_command.id == command.id
-            end) == nil
-
-        missing_dependency =
-          if Enum.empty?(command.dependencies) do
-            nil
-          else
-            Enum.find(command.dependencies, fn id ->
-              Enum.find(commands, fn {other_command, other_index} ->
-                index != other_index && id == other_command.id
-              end) == nil
-            end)
-          end
+        unique_id = verify_unique_id(command, index, commands)
+        missing_dependency = verify_missing_dependency(command, index, commands)
 
         cond do
           !unique_id -> {:error, ":#{command.id} is not unique"}
@@ -59,5 +45,24 @@ defmodule Monads.Multi do
 
   @spec run(t()) :: Result.t()
   def run(%Multi{}) do
+  end
+
+  defp verify_unique_id(command, index, commands) do
+    command.id == nil ||
+      Enum.find(commands, fn {other_command, other_index} ->
+        index != other_index && other_command.id == command.id
+      end) == nil
+  end
+
+  defp verify_missing_dependency(command, index, commands) do
+    if Enum.empty?(command.dependencies) do
+      nil
+    else
+      Enum.find(command.dependencies, fn id ->
+        Enum.find(commands, fn {other_command, other_index} ->
+          index != other_index && id == other_command.id
+        end) == nil
+      end)
+    end
   end
 end
